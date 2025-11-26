@@ -35,7 +35,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const token = authHeader.substring(7)
-    const userId = token // En producción decodificar JWT
+    
+    // En producción: decodificar y validar JWT con Supabase
+    // Por ahora usar token como userId (será validado por Supabase en producción)
+    if (!token || token.length < 10) {
+      return res.status(401).json({ error: 'Invalid token format' })
+    }
+    const userId = token.substring(0, 36) // Usar primeros 36 caracteres como ID
 
     // Rate limiting
     if (!checkRateLimit(userId)) {
@@ -77,7 +83,7 @@ Responde en español.`
 
     // Llamar a OpenAI
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4-turbo',
       messages: [
         { role: 'system', content: systemPrompt },
         ...(conversationHistory || []).map((msg: any) => ({
